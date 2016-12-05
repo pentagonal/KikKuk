@@ -1,0 +1,23 @@
+{
+    "name": "pentagonal/demonite",
+    "description": "Project API KIRIM",
+    "type": "project",
+    "license": "MIT",
+    "require": {
+        "php": ">=5.6",
+        "slim/slim": "^3.5",
+        "pentagonal/phpass": "^1.0",
+        "aura/session": "^2.0",
+        "doctrine/dbal": "^2.5",
+        "guzzlehttp/guzzle": "~6.0"
+    },
+    "require-dev" : {
+        "squizlabs/php_codesniffer": "2.*"
+    },
+    "authors": [
+        {
+            "name": "nawa",
+            "email": "nawa@yahoo.com"
+        }
+    ]
+}
