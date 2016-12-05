@@ -2,19 +2,18 @@
 namespace KikKuk\Model\DataRetrieval;
 
 use Doctrine\DBAL\Driver\Statement;
-use KikKuk\Utilities\Validation;
-use Pentagonal\Phpass\PasswordHash;
+use KikKuk\Utilities\Sanitation;
 
 /**
- * Class User
- * @package KikKuk\Model
+ * Class Post
+ * @package KikKuk\Model\DataRetrieval
  */
-class User extends DataRetrievalAbstract
+class Post extends DataRetrievalAbstract
 {
     /**
      * @var string
      */
-    protected $table = 'user';
+    protected $table = 'post';
 
     /**
      * @var array
@@ -22,7 +21,7 @@ class User extends DataRetrievalAbstract
     protected $selector = 'id';
 
     /**
-     * @var UserMetaData[]
+     * @var PostMetaData[]
      */
     protected $metaData;
 
@@ -33,8 +32,8 @@ class User extends DataRetrievalAbstract
     {
         if (!is_numeric($identifier) && is_string($identifier)) {
             $static = new static();
-            $static = $static->where('username', $identifier);
-            $static->selector = 'username';
+            $static = $static->where('permalink', $identifier);
+            $static->selector = 'permalink';
             return $static;
         }
 
@@ -42,39 +41,32 @@ class User extends DataRetrievalAbstract
     }
 
     /**
-     * Find By user
+     * Find By Permalink
      *
-     * @param string $userName
-     * @return DataRetrievalAbstract|User|null
+     * @param string $permalink
+     * @return DataRetrievalAbstract|Post|null
      */
-    public static function findByUserName($userName)
+    public static function findByPermalink($permalink)
     {
-        if (!is_string($userName) || trim($userName) == '') {
+        if (!is_string($permalink) || trim($permalink) == '') {
             return null;
         }
 
         return static::where(
-            'username',
-            strtolower(trim($userName))
+            'permalink',
+            $permalink
         )->fetch();
     }
 
     /**
-     * Find By user
+     * Check if protected
      *
-     * @param string $email
-     * @return DataRetrievalAbstract|User|null
+     * @return bool
      */
-    public static function findByEmail($email)
+    public function isProtected()
     {
-        if (!is_string($email) || trim($email) == '') {
-            return null;
-        }
-
-        return static::where(
-            'email',
-            strtolower(trim($email))
-        )->fetch();
+        $protected =  $this->getAttribute('protected', 0);
+        return (is_numeric($protected) && $protected > 0);
     }
 
     /**
@@ -85,49 +77,17 @@ class User extends DataRetrievalAbstract
      */
     public function isPasswordMatch($plainPassword)
     {
-        $storedPassword =  $this->getAttribute('password', null);
-        if ($storedPassword == '') {
-            if (is_numeric($this->getAttribute('id'))
-                && $this->find($this->getAttribute('id'))
-            ) {
-                $passwordHash = new PasswordHash();
-                $context = $this->where('id', $this->getAttribute('id'));
-                $newHash = $passwordHash->hashPassword(sha1(microtime() . KIK_KUK_HASH));
-                $context['password'] = $newHash;
+        $plainPassword = Sanitation::maybeSerialize($plainPassword);
+        $password =  $this->getAttribute('password', null);
+        if ($password && is_string($password) && strlen($password) <> 32) {
+            $id = $this->getAttribute('id');
+            if (is_numeric($id) && $this->find($id)) {
+                $context = $this->where('id', $id);
+                $context['password'] = md5($password);
                 $context->update();
             }
-
-            return false;
         }
-
-        if (!is_string($plainPassword) || trim($plainPassword) == '') {
-            return false;
-        }
-
-        $passwordHash = new PasswordHash();
-        return $passwordHash->checkPassword(sha1($plainPassword), $storedPassword);
-    }
-
-    /**
-     * Check if with username
-     *
-     * @param string $userName
-     * @return bool|null
-     */
-    public static function userExist($userName)
-    {
-        return (bool) static::findByUserName($userName);
-    }
-
-    /**
-     * Check if user with certain Email Exists
-     *
-     * @param string $email
-     * @return bool|null
-     */
-    public static function emailExist($email)
-    {
-        return (bool) static::findByEmail($email);
+        return (!$password || $password == md5($plainPassword));
     }
 
     /**
@@ -135,7 +95,7 @@ class User extends DataRetrievalAbstract
      * @return int
      * @throws \Exception
      */
-    public static function createUser(array $args)
+    public static function createPost(array $args)
     {
         $user = new static();
         foreach ($args as $key => $value) {
@@ -149,7 +109,7 @@ class User extends DataRetrievalAbstract
                     E_ERROR
                 );
             }
-            if (in_array($key, ['username', 'email'])) {
+            if (in_array($key, ['permalink'])) {
                 if (!is_string($value) || trim($value) == '') {
                     throw new \InvalidArgumentException(
                         sprintf(
@@ -164,16 +124,37 @@ class User extends DataRetrievalAbstract
             }
         }
 
-        if (isset($args['username']) && static::userExist($args['username'])) {
-            return 0;
+        /**
+         * Convert Permalink
+         */
+        $args['permalink'] = isset($args['permalink']) ? trim($args['permalink']) : '';
+        if ($args['permalink'] == '') {
+            $args['permalink'] = 'post';
         }
 
-        if (isset($args['email']) && static::emailExist($args['email'])) {
+        if (isset($args['permalink'])) {
+            $c = 0;
+            $permalink = $args['permalink'];
+            while(static::findByPermalink($permalink)) {
+                $permalink = $args['permalink'] . '-' .$c;
+                $c++;
+            }
             return 0;
         }
+        if (isset($args['title'])) {
+            $args['title'] = !is_string($args['title'])
+                ? ''
+                : trim(preg_replace('/(\s)+/m', ' ', $args['title']));
+        }
 
-        if (!isset($args['password'])) {
-            $args['password'] = md5(microtime() . KIK_KUK_HASH);
+        if (! isset($args['password'])) {
+            $args['password'] = null;
+        } else {
+            $args['password'] = md5(Sanitation::maybeSerialize($args['password']));
+        }
+
+        if (!isset($args['content'])) {
+            $args['content'] = '';
         }
 
         foreach ($args as $key => $value) {
@@ -193,15 +174,9 @@ class User extends DataRetrievalAbstract
             if (!is_string($password)) {
                 $password = @serialize($password);
             }
-
-            /**
-             * Check If PasswordHash
-             */
-            if (! Validation::isMaybePasswordHash($password)) {
-                $passwordHash = new PasswordHash();
-                $password = $passwordHash->hash(sha1($password));
+            if (strlen($password) <> 32 || preg_match('/[^a-f0-9]/', $password)) {
+                $password = md5($password);
             }
-
             $this->data['current']['password'] = $password;
         }
     }
@@ -213,10 +188,6 @@ class User extends DataRetrievalAbstract
     public function save()
     {
         $this->sanitizePasswordData();
-        if (isset($this->data['current']['username'])) {
-            $this->data['current']->set('username', strtolower($this->data['current']['username']));
-        }
-
         return parent::save();
     }
 
@@ -237,16 +208,15 @@ class User extends DataRetrievalAbstract
     public function sanitizeDatabaseWhereAttributeName($keyName)
     {
         switch ($keyName) {
-            case 'username':
-            case 'email':
-                    return 'LOWER(TRIM('.$this->database->quoteIdentifier($keyName).'))';
+            case 'permalink':
+                return 'LOWER(TRIM('.$this->database->quoteIdentifier($keyName).'))';
         }
 
         return parent::sanitizeDatabaseWhereAttributeName($keyName);
     }
 
     /**
-     * @return array|UserMetaData[]
+     * @return array|PostMetaData[]
      */
     public function getAllMetaData()
     {
@@ -255,7 +225,7 @@ class User extends DataRetrievalAbstract
             $id = $this->getAttribute('id');
             if (is_numeric($id)) {
                 $this->metaData = [];
-                foreach ((array) UserMetaData::find($id)->fetchAll() as $value) {
+                foreach ((array) PostMetaData::find($id)->fetchAll() as $value) {
                     $this->metaData[$value->name] = $value;
                 }
             }
@@ -268,7 +238,7 @@ class User extends DataRetrievalAbstract
      * Get MetaData for User
      *
      * @param string $name
-     * @return UserMetaData|null
+     * @return PostMetaData|null
      */
     public function getMetaData($name)
     {
@@ -290,9 +260,12 @@ class User extends DataRetrievalAbstract
     public function sanitizeDatabaseQuoteValue($value)
     {
         switch ($value) {
-            case 'username':
-            case 'email':
-                $value = trim(strtolower($value));
+            case 'permalink':
+                    $value = trim(strtolower($value));
+                break;
+            case 'protected':
+                    $value = empty($value) || is_numeric($value) && $value < 1 ? '0' : '1';
+                break;
         }
 
         return parent::sanitizeDatabaseQuoteValue($value);
@@ -303,7 +276,7 @@ class User extends DataRetrievalAbstract
      */
     public function __set($name, $value)
     {
-        if ($name == 'username') {
+        if ($name == 'permalink') {
             if (!is_string($value)) {
                 throw new \InvalidArgumentException(
                     sprintf(

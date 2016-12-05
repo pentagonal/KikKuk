@@ -3,6 +3,10 @@ namespace KikKuk\Utilities;
 
 use KikKuk\Record\Arrays\Collection;
 
+/**
+ * Class CommentDoc
+ * @package KikKuk\Utilities
+ */
 class CommentDoc
 {
     /**
@@ -354,7 +358,7 @@ class CommentDoc
         foreach ($match[1] as $key => $value) {
             $keyName = '@'. str_replace('_', '-', $value[0]);
             !isset($this->tags[$keyName])
-                && $this->tags[$keyName] = new Collection();
+            && $this->tags[$keyName] = new Collection();
             $value = $this->parseMatch($keyName, $match[2][$key][0]);
             if (!empty($value)) {
                 $this->tags[$keyName]->unshift(new Collection($value));
@@ -377,38 +381,39 @@ class CommentDoc
                 preg_match('/^(?P<name>(?:(?:private|protect|public|internal)\s*)?(?P<description>.+))?/', $value, $return);
                 break;
             case self::TAG_AUTHOR:
-                    preg_match('/^(?P<name>.+)(?:(?:\s+\<\s*(?P<email>[^\>]*)\s*\>)(?:\s+(?P<description>.+)\s*)?)/', $value, $return);
-                    if (!empty($return['description'])) {
-                        if (strpos($return['description'], '@link')) {
-                            preg_match('/^\{?\@link\s+(?P<link>[^\}\s]*)\s*\}?\s*(?P<description>.+)/', $return['description'], $desc);
-                            if (isset($desc['description'])) {
-                                $return['description'] = $desc['description'];
-                            }
-                            if (isset($desc['link'])) {
-                                $return['link'] = $desc['link'];
-                            }
+                preg_match('/^(?P<name>.+)(?:(?:\s+\<\s*(?P<email>[^\>]*)\s*\>)(?:\s+(?P<description>.+)\s*)?)/', $value, $return);
+                if (!empty($return['description'])) {
+                    if (strpos($return['description'], '@link')) {
+                        preg_match('/^\{?\@link\s+(?P<link>[^\}\s]*)\s*\}?\s*(?P<description>.+)/', $return['description'], $desc);
+                        if (isset($desc['description'])) {
+                            $return['description'] = $desc['description'];
                         }
-                    } elseif (empty($match) && strpos($value, '@link')) {
-                        preg_match('/^(?P<name>.+)\s*\{?\@link\s+(?P<link>[^\}\s]*)\s*\}?\s*(?P<description>.+)/', $value, $return);
-                        if (isset($return['name'])) {
-                            $return['name'] = trim(rtrim($return['name'], '{'));
+                        if (isset($desc['link'])) {
+                            $return['link'] = $desc['link'];
                         }
                     }
-                    if (!empty($return) && !isset($return['email'])) {
-                        $return['email'] = '';
+                } elseif (empty($match) && strpos($value, '@link')) {
+                    preg_match('/^(?P<name>.+)\s*\{?\@link\s+(?P<link>[^\}\s]*)\s*\}?\s*(?P<description>.+)/', $value, $return);
+                    if (isset($return['name'])) {
+                        $return['name'] = trim(rtrim($return['name'], '{'));
                     }
+                }
+                if (!empty($return) && !isset($return['email'])) {
+                    $return['email'] = '';
+                }
                 break;
             case self::TAG_API:
-            case self::TAG_CATEGORY:
-            case self::TAG_EXAMPLE:
             case self::TAG_IGNORE:
             case self::TAG_TODO:
-                $name = $keyName == self::TAG_TODO
+                $name = $keyName == self::TAG_TODO || $keyName == self::TAG_API
                     ? 'description'
                     : 'name';
                 preg_match('/^(?P<'.$name.'>.+)/', $value, $return);
                 if (isset($return[$name])) {
                     $return[$name] = trim($return[$name]);
+                }
+                if ($keyName == self::TAG_API) {
+                    $return['api'] = true;
                 }
                 break;
             case self::TAG_COPYRIGHT:
@@ -421,9 +426,17 @@ class CommentDoc
                 }
                 break;
             case self::TAG_DEPRECATED:
-                preg_match('/^(?P<name>.+)/', $value, $return);
+                preg_match('/^(?P<version>[^\s]*)?(?:\s+(?P<description>.+)?/', $value, $return);
+                if (empty($return['description'])) {
+                    $return['description'] = '';
+                }
+                if (!empty($return['version']) && ! preg_match('/[0-9]/', $return['version'])) {
+                    $return['description'] .= $return['version'];
+                    unset($return['version']);
+                }
                 $return['is_deprecated'] = true;
                 break;
+            case self::TAG_CATEGORY:
             case self::TAG_SOURCE:
             case self::TAG_FILE_SOURCE:
             case self::TAG_GLOBAL:
@@ -432,15 +445,21 @@ class CommentDoc
             case self::TAG_SINCE:
             case self::TAG_VERSION:
             case self::TAG_LINK:
-                    $name = $keyName == self::TAG_LINK
-                        ? 'link'
-                        : 'name';
-                    preg_match('/^(?P<'.$name.'>[^\s]*)(?:\s+(?P<description>.+))?/', $value, $return);
-                    if (!empty($return)) {
-                        $return['description'] = isset($return['description'])
-                            ? $return['description']
-                            : '';
-                    }
+                $name = $keyName == self::TAG_LINK
+                    ? 'link'
+                    : 'name';
+                preg_match('/^(?P<'.$name.'>[^\s]*)(?:\s+(?P<description>.+))?/', $value, $return);
+                if (!empty($return)) {
+                    $return['description'] = isset($return['description'])
+                        ? $return['description']
+                        : '';
+                }
+                break;
+            case self::TAG_EXAMPLE:
+                preg_match('/^(?P<example>(?:[^\s]*|\"[^\"]*)(?:\s+(?P<description>.+))?/', $value, $return);
+                if (!empty($return) && empty($return['description'])) {
+                    $return['description'] = '';
+                }
                 break;
             case self::TAG_LICENSE:
                 preg_match('/^(?P<name>[^\s]*)(?:\s+(?P<link>(\{?\@link\s*)?(?:http?\:\/\/.+[^\s]*|\<\s*.+\s*\>|.+\s*\}))|\s+(?P<description>.+))?/', $value, $return);
@@ -555,18 +574,18 @@ class CommentDoc
             case self::TAG_PROPERTY_WRITE:
             case self::TAG_PARAM:
             case self::TAG_RETURN:
-                    $value = preg_replace('/\s+([\|\[\||\)\(])/', '$1', $value);
-                    preg_match('/^(?P<type>[^\$]+)?(?P<parameter>\$[a-zA-Z\_][a-z0-9A-Z\_]+)(?:\s+(?P<description>.+))?/', $value, $return);
-                    if (!empty($return)) {
-                        if (!empty($return['type'])) {
-                            if (trim($return['type']) == '') {
-                                $return['type'] = [];
-                            } else {
-                                $return['type'] = str_replace([' ', "\r"], '', $return['type']);
-                                $return['type'] = explode('|', $return['type']);
-                            }
+                $value = preg_replace('/\s+([\|\[\||\)\(])/', '$1', $value);
+                preg_match('/^(?P<type>[^\$]+)?(?P<parameter>\$[a-zA-Z\_][a-z0-9A-Z\_]+)(?:\s+(?P<description>.+))?/', $value, $return);
+                if (!empty($return)) {
+                    if (!empty($return['type'])) {
+                        if (trim($return['type']) == '') {
+                            $return['type'] = [];
+                        } else {
+                            $return['type'] = str_replace([' ', "\r"], '', $return['type']);
+                            $return['type'] = explode('|', $return['type']);
                         }
                     }
+                }
                 break;
         }
         foreach ($return as $key => $v) {

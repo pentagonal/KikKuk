@@ -8,6 +8,7 @@ namespace {
     use KikKuk\SlimOverride\Uri;
     use KikKuk\Database;
     use KikKuk\Template;
+    use KikKuk\Utilities\DatabaseUtility;
     use Psr\Http\Message\ServerRequestInterface;
     use Slim\App as Slim;
     use Slim\Container;
@@ -34,6 +35,7 @@ namespace {
             'database',
             'database_schema',
             'session',
+            'admin_view',
             'view',
             // default
             'environment',
@@ -91,10 +93,98 @@ namespace {
                     ],
                     'environment' => Environment::mock($this->portServerManipulation()),
                     'database_schema' => function () {
-                        return require(KIK_KUK_COMPONENT_DIR . '/DatabaseSchema.php');
+                        return [
+                            'base'  => require(KIK_KUK_COMPONENT_DIR . '/DatabaseSchema/BaseSchema.php'),
+                            'event' => require(KIK_KUK_COMPONENT_DIR . '/DatabaseSchema/EventSchema.php'),
+                            'license' => require(KIK_KUK_COMPONENT_DIR . '/DatabaseSchema/LicensingSchema.php'),
+                        ];
                     },
-                    'view' => function () {
-                        return new Template(KIK_KUK_VIEW_DIR);
+                    'view' => function ($container) {
+                        /**
+                         * @var Container  $container
+                         * @var Session    $session Session
+                         * @var Template   $template Template
+                         * @var Uri        $uri
+                         */
+                        $session  = $this['session'];
+                        $uri = $container->get('request')->getUri();
+                        $base_url = $uri->getBaseUrl();
+                        $base_dir = realpath(KIK_KUK_WEB_DIR);
+                        if (!$base_dir) {
+                            $base_dir = preg_replace(
+                                '/(\\\|\/)+/',
+                                '/',
+                                dirname($_SERVER['SCRIPT_FILENAME'])
+                            );
+                        }
+                        if (!is_dir($base_dir)) {
+                            throw new \RuntimeException(
+                                'Web directory does not exists.'
+                            );
+                        }
+                        if (!is_dir(KIK_KUK_VIEW_DIR)) {
+                            throw new \RuntimeException(
+                                'Directory views does not exists.'
+                            );
+                        }
+                        $view_dir = realpath(KIK_KUK_VIEW_DIR);
+                        if (!$view_dir) {
+                            $view_dir = KIK_KUK_VIEW_DIR;
+                        }
+                        $view_dir = preg_replace(
+                            '/(\\\|\/)+/',
+                            '/',
+                            $view_dir
+                        );
+                        $view_dir = rtrim($view_dir, '/') . '/';
+                        $base_dir = rtrim($base_dir, '/') . '/';
+                        if ($base_dir == $view_dir
+                            || stripos(PHP_OS, 'win') !== false
+                            && (
+                                stripos($view_dir, $base_dir) !== 0
+                                || $base_dir == $view_dir
+                            )
+                            || strpos($view_dir, $base_dir) !== 0
+                        ) {
+                            throw new \RuntimeException(
+                                'Directory views invalid, Directory views must be inside of Web directory.'
+                            );
+                        }
+                        $template = new Template(rtrim($view_dir, '/'));
+                        /**
+                         * Set Token
+                         */
+                        $template->setAttributes(
+                            [
+                                'token'    => $session->getCsrfTokenValue(),
+                                'base_url' => $base_url,
+                                'template_url' => rtrim($base_url) . '/' . substr($view_dir, strlen($base_dir)),
+                            ]
+                        );
+                        return $template;
+                    },
+                    'admin_view' => function ($container) {
+                        /**
+                         * @var Container  $container
+                         * @var Session    $session Session
+                         * @var Template   $template Template
+                         * @var Uri        $uri
+                         */
+                        $session  = $this['session'];
+                        $template = new Template(__DIR__ .'/AdminViews');
+                        $uri = $container->get('request')->getUri();
+
+                        /**
+                         * Set Token
+                         */
+                        $template->setAttributes(
+                            [
+                                'token'    => $session->getCsrfTokenValue(),
+                                'base_url'     => $uri->getBaseUrl(),
+                                'template_url' => $uri->getBaseUrl(),
+                            ]
+                        );
+                        return $template;
                     },
                     /**
                      * This service MUST return a SHARED instance
@@ -134,8 +224,8 @@ namespace {
 
                         return $session;
                     },
-                    'database' => function () {
-                        return new Database(
+                    'database' => function ($container) {
+                        $database = new Database(
                             [
                                 'driver' => KIK_KUK_DB_DRIVER,
                                 'prefix' => KIK_KUK_DB_PREFIX,
@@ -145,6 +235,9 @@ namespace {
                                 'dbuser' => KIK_KUK_DB_USER,
                             ]
                         );
+                        // call self Resolve Database
+                        $this->selfResolveDatabase($database, $container);
+                        return $database;
                     }
                 ]
             );
@@ -152,6 +245,17 @@ namespace {
             $container['slim'] = function () {
                 return $this->protectedSlim;
             };
+
+            // create upload dir & index
+            if (!is_dir(KIK_KUK_UPLOAD_DIR) && is_writable(dirname(KIK_KUK_UPLOAD_DIR))) {
+                if (@mkdir(KIK_KUK_UPLOAD_DIR, 0777, true)) {
+                    @file_put_contents(KIK_KUK_UPLOAD_DIR . '/index.html', '');
+                }
+            } elseif (is_dir(KIK_KUK_UPLOAD_DIR) && !file_exists(KIK_KUK_UPLOAD_DIR .'/index.html')
+                && is_writable(KIK_KUK_UPLOAD_DIR)
+            ) {
+                @file_put_contents(KIK_KUK_UPLOAD_DIR . '/index.html', '');
+            }
 
             /**
              * Fix Rewrite
@@ -228,6 +332,62 @@ namespace {
             }
 
             $slim->run();
+        }
+
+        /**
+         * Self Resolve Database Structures
+         * @param Database $database
+         * @param Container $container
+         */
+        protected function selfResolveDatabase(Database $database, $container)
+        {
+            /* --------------------------------------------------------
+             * SELF RESOLVE DATABASE
+             * --------------------------------------------------------
+             */
+
+            /**
+             * Database Structures
+             * @var array
+             */
+            $database_schema = (array) $container['database_schema'];
+
+            if (!isset($database_schema['base']) || !is_array($database_schema['base'])) {
+                $database_schema['base'] = [];
+            }
+
+            if (!isset($database_schema['event']) || !is_array($database_schema['event'])) {
+                $database_schema['event'] = [];
+            }
+
+            if (!isset($database_schema['license']) || !is_array($database_schema['license'])) {
+                $database_schema['license'] = [];
+            }
+
+            $structures = $database_schema['base'];
+
+            /* -----------------------------------------------
+                        WITH ADDITIONAL DATABASE
+             ----------------------------------------------- */
+
+            if (KIK_KUK_DB_WITH_EVENT == true) {
+                $structures = array_merge($structures, $database_schema['event']);
+            }
+            if (KIK_KUK_DB_WITH_LICENSE == true) {
+                $structures = array_merge($structures, $database_schema['license']);
+            }
+
+            /**
+             * @var array $tables
+             */
+            $tables = $database->getSchemaManager()->listTableNames();
+            $theTables = [];
+            foreach (array_diff(array_keys($structures), $tables) as $value) {
+                $theTables[$value] = $structures[$value];
+            }
+            if (!empty($theTables)) {
+                DatabaseUtility::execSchema($theTables);
+            }
         }
 
         /**

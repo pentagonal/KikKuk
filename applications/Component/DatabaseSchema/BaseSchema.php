@@ -7,6 +7,146 @@
  */
 return [
 
+
+    /* ------------------------------------
+     * `event_meta` TABLE
+     *
+     * Meta data of user
+     * --------------------------------- */
+    'attachment' => [
+
+        /* ------------------------------------
+         * COLUMNS DEFINITIONS
+         * --------------------------------- */
+        'columns' => [
+            'id' => [
+                'type' => 'bigint',
+                'options' => [
+                    'autoincrement' => 1,
+                    'length' => 10
+                ]
+            ],
+            // fot post id
+            'the_id' => [
+                'type' => 'bigint',
+                'options' => [
+                    'length' => 10,
+                    'notnull' => true,
+                    'default' => 0
+                ]
+            ],
+            'name' => [
+                'type' => 'string',
+                'options' => [
+                    'length' => 240,
+                    'notnull' => true,
+                ]
+            ],
+            'url' => [
+                'type' => 'text',
+                'options' => [
+                    // don't set length to make it sure as longtext on MySQL
+                    'notnull' => true,
+                    'default' => ''
+                ]
+            ],
+            'type' => [
+                'type' => 'string',
+                'options' => [
+                    'length' => 100,
+                    'notnull' => false,
+                    'default' => 'post'
+                ]
+            ],
+            // meta properties
+            'property' => [
+                'type' => 'text',
+                'options' => [
+                    // don't set length to make it sure as longtext on MySQL
+                    'notnull' => true,
+                    'default' => ''
+                ]
+            ],
+            'time_created' => [
+                'type' => 'datetime',
+                'options' => [
+                    'default' => 'CURRENT_TIMESTAMP'
+                ]
+            ],
+            'time_update' => [
+                'type' => 'datetime',
+                'options' => [
+                    'default' => '0000-00-00 00:00:00',
+                ]
+            ]
+        ],
+
+        /* ------------------------------------
+         * TABLE PROPERTIES
+         * --------------------------------- */
+        'properties' => [
+            'primaryKey' => ['id'],
+        ]
+    ],
+
+    /* ------------------------------------
+     * `options` TABLE
+     *
+     * Meta data of user
+     * --------------------------------- */
+
+    'options' => [
+
+        /* ------------------------------------
+         * COLUMNS DEFINITIONS
+         * --------------------------------- */
+        'columns' => [
+            'id' => [
+                'type' => 'bigint',
+                'options' => [
+                    'autoincrement' => 1,
+                    'length' => 10
+                ]
+            ],
+            'options_name' => [
+                'type' => 'string',
+                'options' => [
+                    'length' => 240,
+                    'notnull' => true
+                ]
+            ],
+            'options_value' => [
+                'type' => 'text',
+                'options' => [
+                    // don't set length to make it sure as longtext on MySQL
+                    'notnull' => true,
+                    'default' => ''
+                ]
+            ],
+            'options_autoload' => [
+                'type' => 'string',
+                'options' => [
+                    'length' => 10,
+                    'notnull' => true,
+                    'default' => 'no'
+                ]
+            ],
+        ],
+
+        /* ------------------------------------
+         * COLUMNS DEFINITIONS
+         * --------------------------------- */
+        'properties' => [
+            'primaryKey' => ['id'],
+            'uniqueIndex' => [
+                // give args key as multiple arguments
+                'args' => [
+                    ['options_name'], 'unique_options_name'
+                ]
+            ]
+        ]
+    ],
+
     /* ------------------------------------
      * `user` TABLE
      *
@@ -183,7 +323,7 @@ return [
             'meta_value' => [
                 'type' => 'text',
                 'options' => [
-                    // dont set length to make it sure as longtext on MySQL
+                    // don't set length to make it sure as longtext on MySQL
                     'notnull' => true,
                     'default' => ''
                 ]
@@ -248,7 +388,7 @@ return [
             'content' => [
                 'type' => 'text',
                 'options' => [
-                    // dont set length to make it sure as longtext on MySQL
+                    // don't set length to make it sure as longtext on MySQL
                     'notnull' => true,
                     'default' => ''
                 ]
@@ -257,7 +397,7 @@ return [
             'property' => [
                 'type' => 'text',
                 'options' => [
-                    // dont set length to make it sure as longtext on MySQL
+                    // don't set length to make it sure as longtext on MySQL
                     'notnull' => true,
                     'default' => ''
                 ]
@@ -268,6 +408,22 @@ return [
                     'length' => 100,
                     'notnull' => false,
                     'default' => 'draft'
+                ]
+            ],
+            'protected' => [
+                'type' => 'int',
+                'options' => [
+                    'length' => 1,
+                    'notnull' => true,
+                    'default' => 0
+                ]
+            ],
+            'password' => [
+                'type' => 'text',
+                'options' => [
+                    // don't set length to make it sure as longtext on MySQL
+                    'notnull' => false,
+                    'default' => null
                 ]
             ],
             'type' => [
@@ -340,7 +496,7 @@ return [
             'meta_value' => [
                 'type' => 'text',
                 'options' => [
-                    // dont set length to make it sure as longtext on MySQL
+                    // don't set length to make it sure as longtext on MySQL
                     'notnull' => true,
                     'default' => ''
                 ]
@@ -364,298 +520,6 @@ return [
          * --------------------------------- */
         'properties' => [
             'primaryKey' => ['id'],
-        ]
-    ],
-
-    /* ------------------------------------
-     * `event` TABLE
-     * Post & Articles table
-     * --------------------------------- */
-    'event' => [
-
-        /* ------------------------------------
-         * COLUMNS DEFINITIONS
-         * --------------------------------- */
-        'columns' => [
-            'id' => [
-                'type' => 'bigint',
-                'options' => [
-                    'autoincrement' => 1,
-                    'length' => 10
-                ]
-            ],
-            'title' => [
-                'type' => 'string',
-                'options' => [
-                    // tittle according MSDN use 512 on Internet Explorer
-                    // we use 240 because google only getting 50 - 60 characters
-                    'length' => 240,
-                    'notnull' => false,
-                    'default' => null
-                ]
-            ],
-            'permalink' => [
-                'type' => 'string',
-                'options' => [
-                    // slug is 200 characters
-                    'length' => 200,
-                    'notnull' => true
-                ]
-            ],
-            'content' => [
-                'type' => 'text',
-                'options' => [
-                    // dont set length to make it sure as longtext on MySQL
-                    'notnull' => true,
-                    'default' => ''
-                ]
-            ],
-            // meta properties
-            'property' => [
-                'type' => 'text',
-                'options' => [
-                    // dont set length to make it sure as longtext on MySQL
-                    'notnull' => true,
-                    'default' => ''
-                ]
-            ],
-            // event doing
-            'time_event_from' => [
-                'type' => 'datetime',
-                'options' => [
-                    'notnull' => true,
-                ]
-            ],
-            'time_event_to' => [
-                'type' => 'datetime',
-                'options' => [
-                    'notnull' => true,
-                ]
-            ],
-            'time_created' => [
-                'type' => 'datetime',
-                'options' => [
-                    'default' => 'CURRENT_TIMESTAMP'
-                ]
-            ],
-            'time_update' => [
-                'type' => 'datetime',
-                'options' => [
-                    'default' => '0000-00-00 00:00:00',
-                ]
-            ]
-        ],
-
-        /* ------------------------------------
-         * TABLE PROPERTIES
-         * --------------------------------- */
-        'properties' => [
-            'primaryKey' => ['id'],
-            'uniqueIndex' => [
-                // give args key as multiple arguments
-                'args' => [
-                    ['permalink'], 'unique_slug_event'
-                ]
-            ]
-        ]
-    ],
-
-    /* ------------------------------------
-     * `event_meta` TABLE
-     *
-     * Meta data of user
-     * --------------------------------- */
-    'event_meta' => [
-
-        /* ------------------------------------
-         * COLUMNS DEFINITIONS
-         * --------------------------------- */
-        'columns' => [
-            'id' => [
-                'type' => 'bigint',
-                'options' => [
-                    'autoincrement' => 1,
-                    'length' => 10
-                ]
-            ],
-            'the_id' => [
-                'type' => 'bigint',
-                'options' => [
-                    'length' => 10
-                ]
-            ],
-            'name' => [
-                'type' => 'string',
-                'options' => [
-                    'length' => 240,
-                    'notnull' => true,
-                ]
-            ],
-            'meta_value' => [
-                'type' => 'text',
-                'options' => [
-                    // dont set length to make it sure as longtext on MySQL
-                    'notnull' => true,
-                    'default' => ''
-                ]
-            ],
-            'time_created' => [
-                'type' => 'datetime',
-                'options' => [
-                    'default' => 'CURRENT_TIMESTAMP'
-                ]
-            ],
-            'time_update' => [
-                'type' => 'datetime',
-                'options' => [
-                    'default' => '0000-00-00 00:00:00',
-                ]
-            ]
-        ],
-
-        /* ------------------------------------
-         * TABLE PROPERTIES
-         * --------------------------------- */
-        'properties' => [
-            'primaryKey' => ['id'],
-        ]
-    ],
-
-    /* ------------------------------------
-     * `event_meta` TABLE
-     *
-     * Meta data of user
-     * --------------------------------- */
-    'attachment' => [
-
-        /* ------------------------------------
-         * COLUMNS DEFINITIONS
-         * --------------------------------- */
-        'columns' => [
-            'id' => [
-                'type' => 'bigint',
-                'options' => [
-                    'autoincrement' => 1,
-                    'length' => 10
-                ]
-            ],
-            'the_id' => [
-                'type' => 'bigint',
-                'options' => [
-                    'length' => 10,
-                    'notnull' => true,
-                    'default' => 0
-                ]
-            ],
-            'name' => [
-                'type' => 'string',
-                'options' => [
-                    'length' => 240,
-                    'notnull' => true,
-                ]
-            ],
-            'url' => [
-                'type' => 'text',
-                'options' => [
-                    // dont set length to make it sure as longtext on MySQL
-                    'notnull' => true,
-                    'default' => ''
-                ]
-            ],
-            'type' => [
-                'type' => 'string',
-                'options' => [
-                    'length' => 100,
-                    'notnull' => false,
-                    'default' => 'post'
-                ]
-            ],
-            // meta properties
-            'property' => [
-                'type' => 'text',
-                'options' => [
-                    // dont set length to make it sure as longtext on MySQL
-                    'notnull' => true,
-                    'default' => ''
-                ]
-            ],
-            'time_created' => [
-                'type' => 'datetime',
-                'options' => [
-                    'default' => 'CURRENT_TIMESTAMP'
-                ]
-            ],
-            'time_update' => [
-                'type' => 'datetime',
-                'options' => [
-                    'default' => '0000-00-00 00:00:00',
-                ]
-            ]
-        ],
-
-        /* ------------------------------------
-         * TABLE PROPERTIES
-         * --------------------------------- */
-        'properties' => [
-            'primaryKey' => ['id'],
-        ]
-    ],
-
-    /* ------------------------------------
-     * `options` TABLE
-     *
-     * Meta data of user
-     * --------------------------------- */
-
-    'options' => [
-
-        /* ------------------------------------
-         * COLUMNS DEFINITIONS
-         * --------------------------------- */
-        'columns' => [
-            'id' => [
-                'type' => 'bigint',
-                'options' => [
-                    'autoincrement' => 1,
-                    'length' => 10
-                ]
-            ],
-            'options_name' => [
-                'type' => 'string',
-                'options' => [
-                    'length' => 240,
-                    'notnull' => true
-                ]
-            ],
-            'options_value' => [
-                'type' => 'text',
-                'options' => [
-                    // dont set length to make it sure as longtext on MySQL
-                    'notnull' => true,
-                    'default' => ''
-                ]
-            ],
-            'options_autoload' => [
-                'type' => 'string',
-                'options' => [
-                    'length' => 10,
-                    'notnull' => true,
-                    'default' => 'no'
-                ]
-            ],
-        ],
-
-        /* ------------------------------------
-         * COLUMNS DEFINITIONS
-         * --------------------------------- */
-        'properties' => [
-            'primaryKey' => ['id'],
-            'uniqueIndex' => [
-                // give args key as multiple arguments
-                'args' => [
-                    ['options_name'], 'unique_options_name'
-                ]
-            ]
         ]
     ],
 ];

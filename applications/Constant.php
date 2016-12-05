@@ -54,14 +54,11 @@ if (!defined('KIK_KUK_DATA_DIR')) {
 if (!defined('KIK_KUK_VENDOR_DIR')) {
     define('KIK_KUK_VENDOR_DIR', dirname(__DIR__) . '/vendor');
 }
+// maybe Web Dir must me not defined
 if (!defined('KIK_KUK_WEB_DIR')) {
     define(
         'KIK_KUK_WEB_DIR',
-        (
-            defined('KIK_KUK_WEB') && is_dir(dirname(KIK_KUK_WEB))
-            ? KIK_KUK_WEB
-            : dirname(__DIR__)
-        )
+        dirname($_SERVER['SCRIPT_FILENAME'])
     );
 }
 
@@ -99,4 +96,14 @@ if (!defined('KIK_KUK_DB_DRIVER')) {
 }
 if (!defined('KIK_KUK_DB_FILE')) {
     define('KIK_KUK_DB_FILE', KIK_KUK_DATA_DIR .'/Database.sqlite');
+}
+
+/**
+ * WIth DB Schema
+ */
+if (!defined('KIK_KUK_DB_WITH_EVENT')) {
+    define('KIK_KUK_DB_WITH_EVENT', false);
+}
+if (!defined('KIK_KUK_DB_WITH_LICENSE')) {
+    define('KIK_KUK_DB_WITH_LICENSE', false);
 }

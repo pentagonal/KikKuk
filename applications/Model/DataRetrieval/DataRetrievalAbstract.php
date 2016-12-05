@@ -14,6 +14,17 @@ use KikKuk\Utilities\Sanitation;
  */
 abstract class DataRetrievalAbstract implements \ArrayAccess, DataRetrievalInterface, \IteratorAggregate
 {
+    const CONTEXT_OR = '[OR]';
+    const CONTEXT_AND = '[AND]';
+
+    const CONTEXT_OR_CONTAIN = '[*OR]';
+    const CONTEXT_OR_START_WITH = '[^OR]';
+    const CONTEXT_OR_END_WITH = '[$OR]';
+
+    const CONTEXT_AND_CONTAIN = '[*AND]';
+    const CONTEXT_AND_START_WITH = '[^AND]';
+    const CONTEXT_AND_END_WITH = '[$AND]';
+
     /**
      * @var string
      */
@@ -273,11 +284,119 @@ abstract class DataRetrievalAbstract implements \ArrayAccess, DataRetrievalInter
                 )
             );
         }
+
         $static->queryBuilder->andWhere(
             $static->sanitizeDatabaseWhereAttributeName($where)
             . '='
             . $static->sanitizeDatabaseQuoteValue($with)
         );
+        return $static;
+    }
+
+    /**
+     * Search Like
+     *
+     * @param array $selectorColumn column to search
+     * @return static
+     */
+    public static function like(array $selectorColumn)
+    {
+        $static = new static();
+        /**
+         * @var QueryBuilder $qb
+         * @var Database     $database
+         */
+        $qb = $static->queryBuilder;
+        $static->queryBuilder =& $qb;
+        $c = 0;
+        foreach ($selectorColumn as $key => $value) {
+            $c++;
+            $key = trim($key);
+            $table = $key;
+            $context = static::CONTEXT_OR;
+            if (strpos($key, '[')) {
+                preg_match('/(?P<table>[^\]+])(?:\[(?P<context>[^\]]*)\])/', $key, $match);
+                if (empty($match['table']) || empty($match['context'])) {
+                    throw new \LogicException(
+                        sprintf(
+                            'Invalid context for key name %s',
+                            $key
+                        )
+                    );
+                }
+                $context = '['. trim($match['context']) . ']';
+                $table   = $match['table'];
+            }
+            $param = ':param_'.$c;
+            switch ($context) {
+                case static::CONTEXT_AND:
+                case static::CONTEXT_AND_CONTAIN:
+                    $static->queryBuilder->andWhere(
+                        $static->sanitizeDatabaseAttributeName($table),
+                        $param
+                    );
+                    $static->queryBuilder->setParameter(
+                        $param,
+                        $static->sanitizeDatabaseQuoteValue("%".Sanitation::maybeSerialize($value)."%")
+                    );
+                    break;
+                case static::CONTEXT_AND_END_WITH:
+                    $static->queryBuilder->andWhere(
+                        $static->sanitizeDatabaseAttributeName($table),
+                        $param
+                    );
+                    $static->queryBuilder->setParameter(
+                        $param,
+                        $static->sanitizeDatabaseQuoteValue("%" .Sanitation::maybeSerialize($value). "$")
+                    );
+                    break;
+                case static::CONTEXT_AND_START_WITH:
+
+                    $static->queryBuilder->andWhere(
+                        $static->sanitizeDatabaseAttributeName($table),
+                        $param
+                    );
+                    $static->queryBuilder->setParameter(
+                        $param,
+                        $static->sanitizeDatabaseQuoteValue("^".Sanitation::maybeSerialize($value) .'%')
+                    );
+                    break;
+                case static::CONTEXT_OR_END_WITH:
+
+                    $static->queryBuilder->orWhere(
+                        $static->sanitizeDatabaseAttributeName($table),
+                        $param
+                    );
+                    $static->queryBuilder->setParameter(
+                        $param,
+                        $static->sanitizeDatabaseQuoteValue("%".Sanitation::maybeSerialize($value) .'$')
+                    );
+                    break;
+                case static::CONTEXT_OR_START_WITH:
+
+                    $static->queryBuilder->orWhere(
+                        $static->sanitizeDatabaseAttributeName($table),
+                        $param
+                    );
+                    $static->queryBuilder->setParameter(
+                        $param,
+                        $static->sanitizeDatabaseQuoteValue("^".Sanitation::maybeSerialize($value) .'%')
+                    );
+                    break;
+                    break;
+                default:
+                    $static->queryBuilder->orWhere(
+                        $static->sanitizeDatabaseAttributeName($table),
+                        $param
+                    );
+                    $static->queryBuilder->setParameter(
+                        $param,
+                        $static->sanitizeDatabaseQuoteValue("%".Sanitation::maybeSerialize($value) .'%')
+                    );
+                    break;
+            }
+        }
+
         return $static;
     }
 
@@ -519,10 +638,13 @@ abstract class DataRetrievalAbstract implements \ArrayAccess, DataRetrievalInter
      */
     public function fetchAll()
     {
-//        if (strpos($this->getQuery(), 'WHERE ') === false) {
-//            return null;
-//        }
-
+        /*
+         * INVALID - ALLOWED WHERE NONE
+         * -------------------------------------------------------
+         *   if (str/pos($this->getQuery(), 'WHERE ') === false) {
+         *       return null;
+         *   }
+         */
         $stmt = $this->queryBuilder->execute();
         $array_return = [];
         if ($stmt) {
@@ -540,10 +662,13 @@ abstract class DataRetrievalAbstract implements \ArrayAccess, DataRetrievalInter
      */
     public function fetch()
     {
-//        if (strpos($this->getQuery(), 'WHERE ') === false) {
-//            return null;
-//        }
-
+        /*
+         * INVALID - ALLOWED WHERE NONE
+         * -------------------------------------------------------
+         *   if (str/pos($this->getQuery(), 'WHERE ') === false) {
+         *       return null;
+         *   }
+         */
         $stmt = $this->queryBuilder->execute();
         $return = null;
         if ($stmt) {
