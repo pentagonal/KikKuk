@@ -6,8 +6,10 @@ namespace {
 
     use KikKuk\Model\DataRetrieval\Option;
     use KikKuk\Template;
+    use Monolog\ErrorHandler;
     use Psr\Http\Message\ResponseInterface;
     use Psr\Http\Message\ServerRequestInterface;
+    use Psr\Log\LogLevel;
     use Slim\App;
     use Slim\Container;
 
@@ -15,6 +17,32 @@ namespace {
         return;
     }
 
+    $slim->add(function(
+        ServerRequestInterface $request,
+        ResponseInterface $response,
+        $next
+    ) {
+
+        /**
+         * Register Error Handler
+         */
+        ErrorHandler::register(
+            $this['log'],
+            [],
+            [],
+            [
+                LogLevel::ERROR,
+                LogLevel::EMERGENCY,
+                LogLevel::ALERT,
+                LogLevel::CRITICAL
+            ]
+        );
+        return $next($request, $response);
+    });
+
+    /**
+     * Handle Template
+     */
     $slim->add(function(
         ServerRequestInterface $request,
         ResponseInterface $response,
@@ -36,9 +64,21 @@ namespace {
                     E_COMPILE_ERROR
                 );
             }
+            $this['log']->info(
+                'Updating Database option for `template:active` to default.',
+                [
+                    'template:active' => $active_template
+                ]
+            );
             Option::update('template:active', $active_template);
         } else {
             if ($active_template != trim($active_template)) {
+                $this['log']->info(
+                    'Updating Database option for `template:active`.',
+                    [
+                        'template:active' => $active_template
+                    ]
+                );
                 Option::update('template:active', trim($active_template));
             }
         }

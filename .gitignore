@@ -166,7 +166,14 @@ vendor
 
 # Ignore Sesion Data
 */Session/sess_*
+
+# Ignore Cache
 */Cache/*
+
+#ignore all logs
+*.log
+*/Logs/*/
+
 
 # Ignore Database Now
 #*.sqlite

@@ -1,9 +1,11 @@
 <?php
 namespace {
 
+    use KikKuk\Logger;
     use KikKuk\Template;
     use Psr\Http\Message\ResponseInterface;
     use Psr\Http\Message\ServerRequestInterface;
+    use Psr\Log\LogLevel;
     use Slim\App;
     use Slim\Container;
     use Slim\Handlers\Error;
@@ -52,6 +54,7 @@ namespace {
                 }
             } catch (\Exception $err) {
             }
+
             $notAllowed = new NotAllowed();
             return $notAllowed($request, $response, $allowedMethods);
         };
@@ -102,6 +105,25 @@ namespace {
             ResponseInterface $response,
             \Exception $e
         ) use (&$container) {
+
+            /* ---------------------------------------------
+                               LOGGING
+             --------------------------------------------- */
+            /** @var Logger $log */
+            $log = $container['log'];
+            $code = Logger::codeToLogLevel($e->getCode(), LogLevel::ERROR);
+            $log->log(
+                $code,
+                sprintf(
+                    'Uncaught Exception %s: "%s" at %s line %s',
+                    get_class($e),
+                    $e->getMessage(),
+                    $e->getFile(),
+                    $e->getLine()
+                ),
+                ['exception' => $e]
+            );
+
             try {
                 /** @var Template $view */
                 $view = $container['view'];

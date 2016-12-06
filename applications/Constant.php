@@ -5,30 +5,21 @@
  * @author nawa <nawa@yahoo.com>
  */
 
-/**
- * Environment
- */
+/* -----------------------------------
+ * DEBUGGING
+ * --------------------------------- */
 if (! defined('KIK_KUK_DEBUG')) {
-    define('KIK_KUK_DEBUG', true);
+    # Debug (boolean)
+    define('KIK_KUK_DEBUG', false);
+}
+if (! defined('KIK_KUK_LOG_LEVEL')) {
+    # Debug (string|int)
+    define('KIK_KUK_LOG_LEVEL', (KIK_KUK_DEBUG ? 'INFO' : 'NOTICE'));
 }
 
-/**
- * Router Cache File
- */
-if (! defined('KIK_KUK_ROUTER_CACHE_FILE')) {
-    define('KIK_KUK_ROUTER_CACHE_FILE', false);
-}
-
-/**
- * Security Hash
- */
-if (!defined('KIK_KUK_HASH')) {
-    define('KIK_KUK_HASH', sha1(__DIR__ . $_SERVER['SERVER_ADDR']));
-}
-
-/**
- * Session Name
- */
+/* -----------------------------------
+ * Session
+ * --------------------------------- */
 if (!defined('KIK_KUK_SESSION_NAME')) {
     define('KIK_KUK_SESSION_NAME', 'KIK_KUK_SSID');
 }
@@ -36,24 +27,36 @@ if (!defined('KIK_KUK_SESSION_PATH')) {
     define('KIK_KUK_SESSION_PATH', '/');
 }
 
-/**
- * Directory
- */
+/* -----------------------------------
+ * Security
+ * --------------------------------- */
+if (!defined('KIK_KUK_HASH')) {
+    define('KIK_KUK_HASH', sha1(__DIR__ . $_SERVER['SERVER_ADDR']));
+}
+
+/* -----------------------------------
+ * Directory Core
+ * --------------------------------- */
+
 if (!defined('KIK_KUK_COMPONENT_DIR')) {
-    define('KIK_KUK_COMPONENT_DIR', __DIR__ .'/Component');
+    define('KIK_KUK_COMPONENT_DIR', __DIR__ . '/Component');
 }
 if (!defined('KIK_KUK_CACHE_DIR')) {
-    define('KIK_KUK_CACHE_DIR', __DIR__ .'/Cache');
+    define('KIK_KUK_CACHE_DIR', __DIR__ . '/Cache');
 }
 if (!defined('KIK_KUK_SESSION_DIR')) {
     define('KIK_KUK_SESSION_DIR', __DIR__ . '/Session');
 }
 if (!defined('KIK_KUK_DATA_DIR')) {
-    define('KIK_KUK_DATA_DIR', __DIR__ .'/Data');
+    define('KIK_KUK_DATA_DIR', __DIR__ . '/Data');
+}
+if (!defined('KIK_KUK_LOG_DIR')) {
+    define('KIK_KUK_LOG_DIR', __DIR__ . '/Logs');
 }
 if (!defined('KIK_KUK_VENDOR_DIR')) {
     define('KIK_KUK_VENDOR_DIR', dirname(__DIR__) . '/vendor');
 }
+
 // maybe Web Dir must me not defined
 if (!defined('KIK_KUK_WEB_DIR')) {
     define(
@@ -62,20 +65,26 @@ if (!defined('KIK_KUK_WEB_DIR')) {
     );
 }
 
-
-/**
- * VIEWS & UPLOADS
- */
-if (!defined('KIK_KUK_VIEW_DIR')) {
-    define('KIK_KUK_VIEW_DIR', dirname(__DIR__) .'/views');
+/* -----------------------------------
+ * Directory Templates & Upload
+ * --------------------------------- */
+if (!defined('KIK_KUK_TEMPLATE_DIR')) {
+    define('KIK_KUK_TEMPLATE_DIR', dirname(__DIR__) . '/views');
 }
 if (!defined('KIK_KUK_UPLOAD_DIR')) {
-    define('KIK_KUK_UPLOAD_DIR', KIK_KUK_WEB_DIR .'/uploads');
+    define('KIK_KUK_UPLOAD_DIR', KIK_KUK_WEB_DIR . '/uploads');
 }
 
-/**
- * Database
- */
+/* -----------------------------------
+ * Router Cache File
+ * --------------------------------- */
+if (! defined('KIK_KUK_ROUTER_CACHE_FILE')) {
+    define('KIK_KUK_ROUTER_CACHE_FILE', false);
+}
+
+/* -----------------------------------
+ * Database detail
+ * --------------------------------- */
 if (!defined('KIK_KUK_DB_PREFIX')) {
     define('KIK_KUK_DB_PREFIX', '');
 }

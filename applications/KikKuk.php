@@ -2,6 +2,8 @@
 namespace {
 
     use FastRoute\Dispatcher;
+    use KikKuk\Handler\StreamHandlerMinimized;
+    use KikKuk\Logger;
     use KikKuk\Session;
     use KikKuk\SlimOverride\Request;
     use KikKuk\SlimOverride\Router;
@@ -9,6 +11,7 @@ namespace {
     use KikKuk\Database;
     use KikKuk\Template;
     use KikKuk\Utilities\DatabaseUtility;
+    use Monolog\ErrorHandler;
     use Psr\Http\Message\ServerRequestInterface;
     use Slim\App as Slim;
     use Slim\Container;
@@ -37,6 +40,8 @@ namespace {
             'session',
             'admin_view',
             'view',
+            'log',
+            'error_handler',
             // default
             'environment',
             'router',
@@ -76,6 +81,71 @@ namespace {
                      * @return KikKuk
                      */
                     'app' => $this,
+                    'log' => function() {
+                        // try to log
+                        try {
+                            $log_level = ! is_numeric(KIK_KUK_LOG_LEVEL)
+                                ? strtoupper(KIK_KUK_LOG_LEVEL)
+                                : KIK_KUK_LOG_LEVEL;
+                            $log_level = Logger::getLevelName($log_level);
+                        } catch(\Exception $e) {
+                            $log_level = (KIK_KUK_DEBUG ? 'INFO' : 'NOTICE');
+                        }
+
+                        /**
+                         * Create index.html & htacess
+                         */
+                        if (is_dir(KIK_KUK_LOG_DIR) && is_writable(KIK_KUK_LOG_DIR)) {
+                            if (!file_exists(KIK_KUK_LOG_DIR .'/index.html')) {
+                                @file_put_contents(KIK_KUK_LOG_DIR.'/index.html', '');
+                            }
+                            if (!file_exists(KIK_KUK_LOG_DIR .'/.htaccess')) {
+                                @file_put_contents(KIK_KUK_LOG_DIR.'/.htaccess', 'Deny From All');
+                            }
+                        }
+
+                        $level  = Logger::toMonologLevel($log_level);
+                        $array_handler = new KikKuk\Handler\ArrayHandler($level);
+                        $logger = new Logger(__CLASS__, [$array_handler]);
+                        if (KIK_KUK_DEBUG) {
+                            // NO DEBUG - DEBUG HANDLED BY IT SELF
+                            // ['DEBUG'    => new StreamHandler(KIK_KUK_LOG_DIR . "/debug.log", Logger::DEBUG)]
+                            $logger->setHandlers(
+                                [
+                                    'ALERT'    => new StreamHandlerMinimized(
+                                        KIK_KUK_LOG_DIR . "/info/info.log",
+                                        Logger::ALERT
+                                    ),
+                                    'CRITICAL' => new StreamHandlerMinimized(
+                                        KIK_KUK_LOG_DIR . "/critical/critical.log",
+                                        Logger::CRITICAL
+                                    ),
+                                    'INFO'     => new StreamHandlerMinimized(
+                                        KIK_KUK_LOG_DIR . "/info/info.log",
+                                        Logger::INFO
+                                    ),
+                                    'EMERGENCY'=> new StreamHandlerMinimized(
+                                        KIK_KUK_LOG_DIR . "/emergency/emergency.log",
+                                        Logger::EMERGENCY
+                                    ),
+                                    'ERROR'    => new StreamHandlerMinimized(
+                                        KIK_KUK_LOG_DIR . "/error/error.log",
+                                        Logger::ERROR
+                                    ),
+                                    'WARNING'  => new StreamHandlerMinimized(
+                                        KIK_KUK_LOG_DIR . "/warning/warning.log",
+                                        Logger::WARNING
+                                    ),
+                                    'NOTICE'   => new StreamHandlerMinimized(
+                                        KIK_KUK_LOG_DIR . "/notice/notice.log",
+                                        Logger::NOTICE
+                                    ),
+                                ]
+                            );
+                        }
+
+                        return $logger;
+                    },
                     /**
                      * PSR-7 Request object
                      *
@@ -84,7 +154,9 @@ namespace {
                      * @return ServerRequestInterface
                      */
                     'request' => function ($container) {
-                        /** @var Container $container */
+                        /**
+                         * @var Container $container
+                         */
                         return Request::createFromEnvironment($container->get('environment'));
                     },
                     'settings' => [
@@ -101,7 +173,7 @@ namespace {
                     },
                     'view' => function ($container) {
                         /**
-                         * @var Container  $container
+                         * @var Container|Logger[]  $container
                          * @var Session    $session Session
                          * @var Template   $template Template
                          * @var Uri        $uri
@@ -111,6 +183,15 @@ namespace {
                         $base_url = $uri->getBaseUrl();
                         $base_dir = realpath(KIK_KUK_WEB_DIR);
                         if (!$base_dir) {
+                            $container['log']->debug(
+                                sprintf(
+                                    'php function realpath does not work. Fallback to Default %s',
+                                    'KIK_KUK_WEB_DIR'
+                                ),
+                                [
+                                    'KIK_KUK_WEB_DIR' => KIK_KUK_WEB_DIR
+                                ]
+                            );
                             $base_dir = preg_replace(
                                 '/(\\\|\/)+/',
                                 '/',
@@ -119,17 +200,28 @@ namespace {
                         }
                         if (!is_dir($base_dir)) {
                             throw new \RuntimeException(
-                                'Web directory does not exists.'
+                                'Web directory does not exists.',
+                                E_USER_ERROR
                             );
                         }
-                        if (!is_dir(KIK_KUK_VIEW_DIR)) {
+                        if (!is_dir(KIK_KUK_TEMPLATE_DIR)) {
                             throw new \RuntimeException(
-                                'Directory views does not exists.'
+                                'Directory views does not exists.',
+                                E_USER_ERROR
                             );
                         }
-                        $view_dir = realpath(KIK_KUK_VIEW_DIR);
+                        $view_dir = realpath(KIK_KUK_TEMPLATE_DIR);
                         if (!$view_dir) {
-                            $view_dir = KIK_KUK_VIEW_DIR;
+                            $container['log']->debug(
+                                sprintf(
+                                    'php function realpath does not work. Fallback to Default %s',
+                                    'KIK_KUK_TEMPLATE_DIR'
+                                ),
+                                [
+                                    'KIK_KUK_TEMPLATE_DIR' => KIK_KUK_TEMPLATE_DIR
+                                ]
+                            );
+                            $view_dir = KIK_KUK_TEMPLATE_DIR;
                         }
                         $view_dir = preg_replace(
                             '/(\\\|\/)+/',
@@ -147,9 +239,11 @@ namespace {
                             || strpos($view_dir, $base_dir) !== 0
                         ) {
                             throw new \RuntimeException(
-                                'Directory views invalid, Directory views must be inside of Web directory.'
+                                'Directory views invalid, Directory views must be inside of Web directory.',
+                                E_USER_ERROR
                             );
                         }
+
                         $template = new Template(rtrim($view_dir, '/'));
                         /**
                          * Set Token
@@ -161,6 +255,7 @@ namespace {
                                 'template_url' => rtrim($base_url) . '/' . substr($view_dir, strlen($base_dir)),
                             ]
                         );
+
                         return $template;
                     },
                     'admin_view' => function ($container) {
@@ -242,6 +337,15 @@ namespace {
                 ]
             );
             $container = $this->protectedSlim->getContainer();
+
+            /**
+             * Register Error Handler
+             */
+            $container['error_handler'] = ErrorHandler::register($container['log']);
+
+            /**
+             * @return Slim
+             */
             $container['slim'] = function () {
                 return $this->protectedSlim;
             };
