@@ -351,7 +351,6 @@ abstract class DataRetrievalAbstract implements \ArrayAccess, DataRetrievalInter
                     );
                     break;
                 case static::CONTEXT_AND_START_WITH:
-
                     $static->queryBuilder->andWhere(
                         $static->sanitizeDatabaseAttributeName($table),
                         $param
@@ -362,7 +361,6 @@ abstract class DataRetrievalAbstract implements \ArrayAccess, DataRetrievalInter
                     );
                     break;
                 case static::CONTEXT_OR_END_WITH:
-
                     $static->queryBuilder->orWhere(
                         $static->sanitizeDatabaseAttributeName($table),
                         $param
@@ -373,7 +371,6 @@ abstract class DataRetrievalAbstract implements \ArrayAccess, DataRetrievalInter
                     );
                     break;
                 case static::CONTEXT_OR_START_WITH:
-
                     $static->queryBuilder->orWhere(
                         $static->sanitizeDatabaseAttributeName($table),
                         $param
@@ -496,10 +493,10 @@ abstract class DataRetrievalAbstract implements \ArrayAccess, DataRetrievalInter
             if (is_array($where)) {
                 foreach ($where as $key => $value) {
                     $qb->andWhere(
-                            $this->sanitizeDatabaseWhereAttributeName($key)
+                        $this->sanitizeDatabaseWhereAttributeName($key)
                             . ' = '
                             . $this->sanitizeDatabaseQuoteValue($value)
-                        );
+                    );
                 }
             } else {
                 $qb->andWhere($where);

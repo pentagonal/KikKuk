@@ -15,8 +15,8 @@
     <rule ref="Generic.Arrays.DisallowLongArraySyntax"/>
     <!-- Path To Check
         // Check Only Applications Directory
-        // Ignore View Cache & Data
+        // Ignore View, Cache, Session, Logs & Data
     -->
     <exclude-pattern>applications/(Data|AdminViews|Cache|Logs|Session)/*</exclude-pattern>
-    <file>Applications</file>
+    <file>applications</file>
 </ruleset>

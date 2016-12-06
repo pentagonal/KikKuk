@@ -239,7 +239,7 @@ class User extends DataRetrievalAbstract
         switch ($keyName) {
             case 'username':
             case 'email':
-                    return 'LOWER(TRIM('.$this->database->quoteIdentifier($keyName).'))';
+                return 'LOWER(TRIM('.$this->database->quoteIdentifier($keyName).'))';
         }
 
         return parent::sanitizeDatabaseWhereAttributeName($keyName);

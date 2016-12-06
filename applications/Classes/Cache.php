@@ -214,8 +214,7 @@ class Cache
                     $this->config['driver'] = self::MEMCACHED;
                     $this->resource = new $this->config['driver'];
                     $this->resource->setMemCached($config['driver']);
-                }
-                /** @noinspection PhpUnnecessaryFullyQualifiedNameInspection
+                } /** @noinspection PhpUnnecessaryFullyQualifiedNameInspection
                  *                PhpUndefinedClassInspection
                  *                PhpUndefinedNamespaceInspection
                  */
@@ -230,16 +229,14 @@ class Cache
                     $this->config['driver'] = self::REDIS;
                     $this->resource = new $this->config['driver'];
                     $this->resource->setRedis($config['driver']);
-                }
-                /** @noinspection PhpUndefinedClassInspection */
+                } /** @noinspection PhpUndefinedClassInspection */
                 elseif (class_exists('\\Couchbase')
                     && $config['driver'] instanceof \Couchbase
                 ) {
                     $this->config['driver'] = self::COUCH_BASE;
                     $this->resource = new $this->config['driver'];
                     $this->resource->setCouchbase($config['driver']);
-                }
-                /** @noinspection PhpUnnecessaryFullyQualifiedNameInspection
+                } /** @noinspection PhpUnnecessaryFullyQualifiedNameInspection
                  *                PhpUndefinedClassInspection
                  *                PhpUndefinedNamespaceInspection
                  */

@@ -140,20 +140,20 @@ abstract class ResponseAbstract
             } elseif (stripos($this->mimeType, 'sgm') !== false) {
                 $this->mimeType = 'text/sgml';
             } elseif (preg_match(
-                    '/(?:(?:[^/]*)(?:\\\+|\/+))?(ja?son|xml|ogg|pdf|postscript|zip)/',
-                    trim(strtolower($this->mimeType)),
-                    $match
-                ) && !empty($match[1])
+                '/(?:(?:[^/]*)(?:\\\+|\/+))?(ja?son|xml|ogg|pdf|postscript|zip)/',
+                trim(strtolower($this->mimeType)),
+                $match
+            ) && !empty($match[1])
             ) {
                 if ($match[1] == 'jason') {
                     $match[1] = 'json';
                 }
                 $this->mimeType = 'application/' . $match[1];
             } elseif (preg_match(
-                    '/(?:(?:[^/]*)(?:\\\+|\/+))?(jpe?g?|png|w?bmp|gif|pbm|tif(?:f+)?|png|ppm|ras|xbm|xpm|xwd)/',
-                    trim(strtolower($this->mimeType)),
-                    $match
-                )
+                '/(?:(?:[^/]*)(?:\\\+|\/+))?(jpe?g?|png|w?bmp|gif|pbm|tif(?:f+)?|png|ppm|ras|xbm|xpm|xwd)/',
+                trim(strtolower($this->mimeType)),
+                $match
+            )
                 && !empty($match[1])
             ) {
                 if (strpos($match[1], 'tif') !== false) {

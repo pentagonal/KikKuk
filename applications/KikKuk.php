@@ -73,6 +73,18 @@ namespace {
          */
         protected function process()
         {
+            /* -----------------------------------
+                    SET ERROR REPORT
+              ---------------------------------- */
+
+            error_reporting(KIK_KUK_DEV_MODE == true ? -1 : 0);
+            @ini_set('display_errors', KIK_KUK_DEV_MODE == true ? 'on' : 'off');
+
+            /**
+             * Create Slim Application
+             *
+             * @var Slim
+             */
             $this->protectedSlim = new Slim(
                 [
                     /**
@@ -81,38 +93,30 @@ namespace {
                      * @return KikKuk
                      */
                     'app' => $this,
-                    'log' => function() {
-                        // try to log
-                        try {
-                            $log_level = ! is_numeric(KIK_KUK_LOG_LEVEL)
-                                ? strtoupper(KIK_KUK_LOG_LEVEL)
-                                : KIK_KUK_LOG_LEVEL;
-                            $log_level = Logger::getLevelName($log_level);
-                        } catch(\Exception $e) {
-                            $log_level = (KIK_KUK_DEBUG ? 'INFO' : 'NOTICE');
-                        }
+                    'log' => function () {
+                        $array_handler = new KikKuk\Handler\ArrayHandler(Logger::DEBUG);
+                        $logger = new Logger(__CLASS__, [$array_handler]);
 
                         /**
-                         * Create index.html & htacess
+                         * if Debugging
                          */
-                        if (is_dir(KIK_KUK_LOG_DIR) && is_writable(KIK_KUK_LOG_DIR)) {
-                            if (!file_exists(KIK_KUK_LOG_DIR .'/index.html')) {
-                                @file_put_contents(KIK_KUK_LOG_DIR.'/index.html', '');
+                        if (KIK_KUK_DEBUG_LOG  === true || KIK_KUK_DEBUG_LOG === 1) {
+                            /**
+                             * Create index.html & htacess
+                             */
+                            if (is_dir(KIK_KUK_LOG_DIR) && is_writable(KIK_KUK_LOG_DIR)) {
+                                if (!file_exists(KIK_KUK_LOG_DIR . '/index.html')) {
+                                    @file_put_contents(KIK_KUK_LOG_DIR . '/index.html', '');
+                                }
+                                if (!file_exists(KIK_KUK_LOG_DIR . '/.htaccess')) {
+                                    @file_put_contents(KIK_KUK_LOG_DIR . '/.htaccess', 'Deny From All');
+                                }
                             }
-                            if (!file_exists(KIK_KUK_LOG_DIR .'/.htaccess')) {
-                                @file_put_contents(KIK_KUK_LOG_DIR.'/.htaccess', 'Deny From All');
-                            }
-                        }
 
-                        $level  = Logger::toMonologLevel($log_level);
-                        $array_handler = new KikKuk\Handler\ArrayHandler($level);
-                        $logger = new Logger(__CLASS__, [$array_handler]);
-                        if (KIK_KUK_DEBUG) {
                             // NO DEBUG - DEBUG HANDLED BY IT SELF
-                            // ['DEBUG'    => new StreamHandler(KIK_KUK_LOG_DIR . "/debug.log", Logger::DEBUG)]
                             $logger->setHandlers(
                                 [
-                                    'ALERT'    => new StreamHandlerMinimized(
+                                    'ALERT' => new StreamHandlerMinimized(
                                         KIK_KUK_LOG_DIR . "/info/info.log",
                                         Logger::ALERT
                                     ),
@@ -120,23 +124,23 @@ namespace {
                                         KIK_KUK_LOG_DIR . "/critical/critical.log",
                                         Logger::CRITICAL
                                     ),
-                                    'INFO'     => new StreamHandlerMinimized(
+                                    'INFO' => new StreamHandlerMinimized(
                                         KIK_KUK_LOG_DIR . "/info/info.log",
                                         Logger::INFO
                                     ),
-                                    'EMERGENCY'=> new StreamHandlerMinimized(
+                                    'EMERGENCY' => new StreamHandlerMinimized(
                                         KIK_KUK_LOG_DIR . "/emergency/emergency.log",
                                         Logger::EMERGENCY
                                     ),
-                                    'ERROR'    => new StreamHandlerMinimized(
+                                    'ERROR' => new StreamHandlerMinimized(
                                         KIK_KUK_LOG_DIR . "/error/error.log",
                                         Logger::ERROR
                                     ),
-                                    'WARNING'  => new StreamHandlerMinimized(
+                                    'WARNING' => new StreamHandlerMinimized(
                                         KIK_KUK_LOG_DIR . "/warning/warning.log",
                                         Logger::WARNING
                                     ),
-                                    'NOTICE'   => new StreamHandlerMinimized(
+                                    'NOTICE' => new StreamHandlerMinimized(
                                         KIK_KUK_LOG_DIR . "/notice/notice.log",
                                         Logger::NOTICE
                                     ),
@@ -160,7 +164,7 @@ namespace {
                         return Request::createFromEnvironment($container->get('environment'));
                     },
                     'settings' => [
-                        'displayErrorDetails' => true,
+                        'displayErrorDetails' => KIK_KUK_DEV_MODE,
                         'routerCacheFile' => KIK_KUK_ROUTER_CACHE_FILE
                     ],
                     'environment' => Environment::mock($this->portServerManipulation()),
@@ -336,8 +340,13 @@ namespace {
                     }
                 ]
             );
-            $container = $this->protectedSlim->getContainer();
 
+            /**
+             * Get container
+             *
+             * @var Container $container
+             */
+            $container = $this->protectedSlim->getContainer();
             /**
              * Register Error Handler
              */

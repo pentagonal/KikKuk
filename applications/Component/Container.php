@@ -80,7 +80,8 @@ namespace {
                         $view = $container->get('view');
                     }
                     return $view->render(
-                        '404', [
+                        '404',
+                        [
                             'title' => '404 Page Not Found'
                         ],
                         $response->withStatus(404)
@@ -109,6 +110,7 @@ namespace {
             /* ---------------------------------------------
                                LOGGING
              --------------------------------------------- */
+
             /** @var Logger $log */
             $log = $container['log'];
             $code = Logger::codeToLogLevel($e->getCode(), LogLevel::ERROR);
@@ -150,7 +152,7 @@ namespace {
             } catch (\Exception $err) {
             }
 
-            $error = new Error(KIK_KUK_DEBUG);
+            $error = new Error(KIK_KUK_DEV_MODE);
             return $error($request, $response, $e)->withStatus(500);
         };
     };

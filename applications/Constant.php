@@ -6,15 +6,16 @@
  */
 
 /* -----------------------------------
- * DEBUGGING
+ * DEBUGGING & DEV MODE
  * --------------------------------- */
 if (! defined('KIK_KUK_DEBUG')) {
     # Debug (boolean)
-    define('KIK_KUK_DEBUG', false);
+    define('KIK_KUK_DEV_MODE', false);
 }
-if (! defined('KIK_KUK_LOG_LEVEL')) {
+
+if (! defined('KIK_KUK_DEBUG_LOG')) {
     # Debug (string|int)
-    define('KIK_KUK_LOG_LEVEL', (KIK_KUK_DEBUG ? 'INFO' : 'NOTICE'));
+    define('KIK_KUK_DEBUG_LOG', false);
 }
 
 /* -----------------------------------

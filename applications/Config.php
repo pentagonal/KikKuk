@@ -4,10 +4,10 @@
  */
 
 /* -----------------------------------
- * DEBUGGING
+ * DEBUGGING & DEV MODE
  * --------------------------------- */
-define('KIK_KUK_DEBUG', true);      # debugging
-define('KIK_LOG_LEVEL', 'DEBUG');   # log level
+define('KIK_KUK_DEV_MODE', true);    # Development Mode
+define('KIK_KUK_DEBUG_LOG', true);   # log level / false to disable
 
 /* -----------------------------------
  * Session

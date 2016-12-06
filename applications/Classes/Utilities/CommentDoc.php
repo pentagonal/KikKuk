@@ -378,13 +378,25 @@ class CommentDoc
         $return = [];
         switch ($keyName) {
             case self::TAG_ACCESS:
-                preg_match('/^(?P<name>(?:(?:private|protect|public|internal)\s*)?(?P<description>.+))?/', $value, $return);
+                preg_match(
+                    '/^(?P<name>(?:(?:private|protect|public|internal)\s*)?(?P<description>.+))?/',
+                    $value,
+                    $return
+                );
                 break;
             case self::TAG_AUTHOR:
-                preg_match('/^(?P<name>.+)(?:(?:\s+\<\s*(?P<email>[^\>]*)\s*\>)(?:\s+(?P<description>.+)\s*)?)/', $value, $return);
+                preg_match(
+                    '/^(?P<name>.+)(?:(?:\s+\<\s*(?P<email>[^\>]*)\s*\>)(?:\s+(?P<description>.+)\s*)?)/',
+                    $value,
+                    $return
+                );
                 if (!empty($return['description'])) {
                     if (strpos($return['description'], '@link')) {
-                        preg_match('/^\{?\@link\s+(?P<link>[^\}\s]*)\s*\}?\s*(?P<description>.+)/', $return['description'], $desc);
+                        preg_match(
+                            '/^\{?\@link\s+(?P<link>[^\}\s]*)\s*\}?\s*(?P<description>.+)/',
+                            $return['description'],
+                            $desc
+                        );
                         if (isset($desc['description'])) {
                             $return['description'] = $desc['description'];
                         }
@@ -393,7 +405,11 @@ class CommentDoc
                         }
                     }
                 } elseif (empty($match) && strpos($value, '@link')) {
-                    preg_match('/^(?P<name>.+)\s*\{?\@link\s+(?P<link>[^\}\s]*)\s*\}?\s*(?P<description>.+)/', $value, $return);
+                    preg_match(
+                        '/^(?P<name>.+)\s*\{?\@link\s+(?P<link>[^\}\s]*)\s*\}?\s*(?P<description>.+)/',
+                        $value,
+                        $return
+                    );
                     if (isset($return['name'])) {
                         $return['name'] = trim(rtrim($return['name'], '{'));
                     }
@@ -419,7 +435,11 @@ class CommentDoc
             case self::TAG_COPYRIGHT:
                 preg_match('/^(?P<name>.+)/', $value, $return);
                 if (isset($return['name']) && strpos($return['name'], '@link')) {
-                    preg_match('/^(?P<name>.+)\s*\{?\@link\s+(?P<link>[^\}\s]*)\s*\}?\s*(?P<description>.+)/', $value, $return);
+                    preg_match(
+                        '/^(?P<name>.+)\s*\{?\@link\s+(?P<link>[^\}\s]*)\s*\}?\s*(?P<description>.+)/',
+                        $value,
+                        $return
+                    );
                     if (isset($return['name'])) {
                         $return['name'] = trim(rtrim($return['name'], '{'));
                     }
@@ -462,7 +482,20 @@ class CommentDoc
                 }
                 break;
             case self::TAG_LICENSE:
-                preg_match('/^(?P<name>[^\s]*)(?:\s+(?P<link>(\{?\@link\s*)?(?:http?\:\/\/.+[^\s]*|\<\s*.+\s*\>|.+\s*\}))|\s+(?P<description>.+))?/', $value, $return);
+                preg_match(
+                    '#^(?P<name>[^\s]*)
+                        (?:
+                            \s+
+                            (?P<link>(\{?\@link\s*)?
+                                (?:http?\:\/\/.+[^\s]*|\<\s*.+\s*\>|.+\s*\})
+                            )
+                            |\s+
+                            (?P<description>.+)
+                        )?
+                    #x',
+                    $value,
+                    $return
+                );
                 if (!empty($return)) {
                     if (isset($return['link'])) {
                         if (strpos($return['link'], '@link') !== false) {
@@ -478,7 +511,17 @@ class CommentDoc
             case self::TAG_METHOD:
                 $value = preg_replace('/\s+([\|\[\||\)\(])/', '$1', $value);
                 preg_match(
-                    '/^(?P<is_static>static\s+)?(?:(?P<return>.[^\(\s]+)\s+)?(?:(?P<name>(?P<method>[a-zA-Z\_\s]+)\((?P<arguments>[^\)]*[^\)])?\)))(?:[\;]+)?(?P<description>.+)?/',
+                    '#^(?P<is_static>static\s+)?
+                        (?:
+                            (?P<return>.[^\(\s]+)\s+)?
+                            (?:
+                                (?P<name>(?P<method>[a-zA-Z\_\s]+)
+                                \((?P<arguments>[^\)]*[^\)])?\)
+                            )
+                        )
+                        (?:[\;]+)
+                        ?(?P<description>.+)?
+                    #x',
                     $value,
                     $return
                 );
@@ -495,7 +538,16 @@ class CommentDoc
                 foreach (explode(',', $args) as $value) {
                     $value = trim($value);
                     if ($value != '') {
-                        preg_match('/(?:(?P<type>[^\s\$]*)\s+)?(?P<parameter>[^\s\=]*)(?:\s*\=(?P<default_value>.+))?/', $value, $match);
+                        preg_match(
+                            '#^(?:
+                                    (?P<type>[^\s\$]*)\s+)?
+                                    (?P<parameter>[^\s\=]*)
+                                    (?:\s*\=(?P<default_value>.+)
+                                )?
+                            #x',
+                            $value,
+                            $match
+                        );
                         if (!empty($match)) {
                             foreach ($match as $key => $v) {
                                 if (is_numeric($key)) {
@@ -556,7 +608,11 @@ class CommentDoc
             case self::TAG_USES:
                 preg_match('/^(?P<name>[^\s]+)(?P<description>.+)?/', $value, $return);
                 if (!empty($return['description']) && strpos($return['description'], '@link')) {
-                    preg_match('/^\{?\@link\s+(?P<link>[^\}\s]*)\s*\}?\s*(?P<description>.+)/', $return['description'], $desc);
+                    preg_match(
+                        '/^\{?\@link\s+(?P<link>[^\}\s]*)\s*\}?\s*(?P<description>.+)/',
+                        $return['description'],
+                        $desc
+                    );
                     if (isset($desc['description'])) {
                         $return['description'] = $desc['description'];
                     }
@@ -575,7 +631,15 @@ class CommentDoc
             case self::TAG_PARAM:
             case self::TAG_RETURN:
                 $value = preg_replace('/\s+([\|\[\||\)\(])/', '$1', $value);
-                preg_match('/^(?P<type>[^\$]+)?(?P<parameter>\$[a-zA-Z\_][a-z0-9A-Z\_]+)(?:\s+(?P<description>.+))?/', $value, $return);
+                preg_match(
+                    '#
+                        ^(?P<type>[^\$]+)?
+                        (?P<parameter>\$[a-zA-Z\_][a-z0-9A-Z\_]+)
+                        (?:\s+(?P<description>.+))?
+                    #x',
+                    $value,
+                    $return
+                );
                 if (!empty($return)) {
                     if (!empty($return['type'])) {
                         if (trim($return['type']) == '') {
@@ -667,7 +731,7 @@ class CommentDoc
         if (!is_string($name)) {
             return null;
         }
-        $name = '@'.trim(strtolower($name),'@');
+        $name = '@'.trim(strtolower($name), '@');
         if ($this->tags->has($name)) {
             return $this->tags->get($name);
         }

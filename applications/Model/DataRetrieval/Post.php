@@ -135,7 +135,7 @@ class Post extends DataRetrievalAbstract
         if (isset($args['permalink'])) {
             $c = 0;
             $permalink = $args['permalink'];
-            while(static::findByPermalink($permalink)) {
+            while (static::findByPermalink($permalink)) {
                 $permalink = $args['permalink'] . '-' .$c;
                 $c++;
             }

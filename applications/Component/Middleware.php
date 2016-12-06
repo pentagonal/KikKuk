@@ -17,7 +17,7 @@ namespace {
         return;
     }
 
-    $slim->add(function(
+    $slim->add(function (
         ServerRequestInterface $request,
         ResponseInterface $response,
         $next
@@ -43,7 +43,7 @@ namespace {
     /**
      * Handle Template
      */
-    $slim->add(function(
+    $slim->add(function (
         ServerRequestInterface $request,
         ResponseInterface $response,
         $next
@@ -56,7 +56,7 @@ namespace {
         $template_directory = $template->getTemplateDirectory();
         $active_template = Option::get('template:active');
         if (!is_string($active_template) || trim($active_template) == ''
-            || !is_dir( $template_directory . '/' . trim($active_template))) {
+            || !is_dir($template_directory . '/' . trim($active_template))) {
             $active_template = 'Default';
             if (!is_dir($template_directory . '/' . $active_template)) {
                 throw new \RuntimeException(

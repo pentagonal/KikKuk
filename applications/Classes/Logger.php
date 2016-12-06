@@ -20,7 +20,7 @@ class Logger extends MonoLog
      * Logger constructor.
      * {@inheritdoc}
      */
-    public function __construct($name = null, array $handlers = array())
+    public function __construct($name = null, array $handlers = [])
     {
         if (!$name || !is_numeric($name) && !is_string($name)) {
             $name = __CLASS__;
