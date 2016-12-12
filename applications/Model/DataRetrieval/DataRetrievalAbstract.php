@@ -315,7 +315,7 @@ abstract class DataRetrievalAbstract implements \ArrayAccess, DataRetrievalInter
             $table = $key;
             $context = static::CONTEXT_OR;
             if (strpos($key, '[')) {
-                preg_match('/(?P<table>[^\]+])(?:\[(?P<context>[^\]]*)\])/', $key, $match);
+                preg_match('/(?P<table>[^\[]+)(?:\[(?P<context>[^\]]*)\])\s*$/', $key, $match);
                 if (empty($match['table']) || empty($match['context'])) {
                     throw new \LogicException(
                         sprintf(
