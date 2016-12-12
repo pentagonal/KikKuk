@@ -18,7 +18,7 @@ function getScore(value)
 {
     var score;
 
-    /*!
+    /* ---------------------------------------
      * Using Try to handle Unloading zxcvbn.js
      * try to get score from zxcvbn js else use
      * strong password
@@ -31,7 +31,7 @@ function getScore(value)
             regexModerate = /^(?=.*[a-z])(?=.*[0-9])((\S|\s){8,})$/im,
             stdTest       = (regexWeak.test(value) && regexModerate.test(value) ? 2 : 1),
             strongTest    = (stdTest == 2 && regexGood.test(value) ? 3 : stdTest);
-            score         = (strongTest == 3 && isStrongPassword(value) ? 4 : strongTest);
+        score         = (strongTest == 3 && isStrongPassword(value) ? 4 : strongTest);
     }
     if (score > 3 && ! isStrongPassword(value)) {
         return 3;
@@ -105,8 +105,8 @@ function validateEmail(email)
  */
 function validateUsername(username, length)
 {
-    var regEx = new RegExp('(?=.{3,'+ isNumeric(length) || length <= 3 ? length : 30 +'}$)^[a-zA-Z][a-zA-Z0-9]+(?:[_-][A-Za-z0-9]+)*$', 'im');
-    return regEx.test(username);
+    var regExP = new RegExp('(?=.{3,'+ isNumeric(length) || length <= 3 ? length : 30 +'}$)^[a-zA-Z][a-zA-Z0-9]+(?:[_-][A-Za-z0-9]+)*$', 'im');
+    return regExP.test(username);
 }
 
 /**
@@ -118,8 +118,8 @@ function validateUsername(username, length)
  */
 function isStrongPassword(string)
 {
-    re  = /^(?:(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[\~\\\.\+\*\?\^\$\[\]\(\)\|\{\}\'\#\_\-\&\%\@\=\"\!\<\>\`\;\:\s])((\S|\s|\d){8,})|(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[\~\\\.\+\*\?\^\$\[\]\(\)\|\{\}\'\#\_\-\&\%\@\=\"\!\<\>\`\;\:])((\w|\s|\S|\d){8,}))$/m;
-    return re.test(string);
+    var regExP = /^(?:(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[\~\\\.\+\*\?\^\$\[\]\(\)\|\{\}\'\#\_\-\&\%\@\=\"\!\<\>\`\;\:\s])((\S|\s|\d){8,})|(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[\~\\\.\+\*\?\^\$\[\]\(\)\|\{\}\'\#\_\-\&\%\@\=\"\!\<\>\`\;\:])((\w|\s|\S|\d){8,}))$/m;
+    return regExP.test(string);
 }
 
 /**

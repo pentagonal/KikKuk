@@ -8,7 +8,7 @@
 /* -----------------------------------
  * DEBUGGING & DEV MODE
  * --------------------------------- */
-if (! defined('KIK_KUK_DEBUG')) {
+if (! defined('KIK_KUK_DEV_MODE')) {
     # Debug (boolean)
     define('KIK_KUK_DEV_MODE', false);
 }
