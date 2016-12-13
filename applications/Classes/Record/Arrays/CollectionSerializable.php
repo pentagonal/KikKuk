@@ -7,8 +7,7 @@ namespace KikKuk\Record\Arrays;
  */
 class CollectionSerializable extends Collection implements
     \Serializable,
-    \JsonSerializable,
-    \IteratorAggregate
+    \JsonSerializable
 {
     /**
      * Serialize array
